@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#3c0b08" />
+  <title>You’re Invited to The Society</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --wine: #3d0a08;
+      --wine-2: #58120e;
+      --cream: #f1ecd7;
+      --gold: #caa85f;
+      --gold-dark: #806126;
+      --ink: #2a0907;
+      --shadow: rgba(0,0,0,.48);
+      --card-ratio: 1103 / 1426;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin:0; min-height:100%; background:#190403; }
+    body {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      color: var(--cream);
+      overflow-x: hidden;
+    }
+    button, input { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+
+    .app-shell {
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(128,45,34,.30), transparent 36rem),
+        linear-gradient(180deg, #170302, #260604 42%, #120201);
+    }
+    .phone-stage {
+      position: relative;
+      width: min(100vw, 480px);
+      min-height: 100svh;
+      background: var(--wine);
+      overflow: hidden;
+      isolation: isolate;
+    }
+    @media (min-width: 700px) {
+      .phone-stage {
+        min-height: min(100svh, 900px);
+        height: min(100svh, 900px);
+        border-inline: 1px solid rgba(202,168,95,.18);
+        box-shadow: 0 30px 90px rgba(0,0,0,.58);
+      }
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .36s ease, visibility .36s ease;
+      background: var(--wine);
+    }
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      z-index: 2;
+    }
+
+    /* PRESS GATE */
+    .gate-screen { background: #2a0705; }
+    .gate-poster {
+      position:absolute; inset:0;
+      width:100%; height:100%; object-fit:cover;
+      object-position:center;
+      user-select:none;
+    }
+    .press-hotspot {
+      position:absolute;
+      left:50%; top:58.6%;
+      width:25%; aspect-ratio:1;
+      transform:translate(-50%,-50%);
+      border:0;
+      border-radius:50%;
+      background:transparent;
+      cursor:pointer;
+      z-index:3;
+    }
+    .press-hotspot::after {
+      content:"";
+      position:absolute; inset:33%;
+      border-radius:50%;
+      border:1px solid rgba(255,237,184,.5);
+      box-shadow: 0 0 0 8px rgba(202,168,95,.06), 0 0 22px rgba(202,168,95,.34);
+      animation: ringPulse 1.8s ease-in-out infinite;
+    }
+    .gate-hint {
+      position:absolute;
+      left:50%; bottom:max(22px, env(safe-area-inset-bottom));
+      transform:translateX(-50%);
+      padding:9px 14px;
+      color:var(--cream);
+      background:rgba(34,4,3,.56);
+      border:1px solid rgba(202,168,95,.48);
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
+      font-family:Montserrat,Arial,sans-serif;
+      font-size:10px;
+      letter-spacing:.22em;
+      text-transform:uppercase;
+      white-space:nowrap;
+      pointer-events:none;
+    }
+    @keyframes ringPulse {
+      0%,100% { transform:scale(.9); opacity:.42; }
+      50% { transform:scale(1.22); opacity:1; }
+    }
+
+    /* VIDEO */
+    .video-screen { background:#000; }
+    #introVideo { width:100%; height:100%; object-fit:cover; display:block; background:#000; }
+    .skip-video {
+      position:absolute; right:14px; bottom:max(14px, env(safe-area-inset-bottom));
+      border:1px solid rgba(241,236,215,.3);
+      background:rgba(0,0,0,.38);
+      color:rgba(241,236,215,.78);
+      padding:8px 11px;
+      border-radius:999px;
+      font:500 9px/1 Montserrat,Arial,sans-serif;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      cursor:pointer;
+    }
+
+    /* CARD SCREEN */
+    .invite-screen,
+    .form-screen,
+    .success-screen {
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      background:
+        radial-gradient(circle at 50% 8%, rgba(117,34,26,.35), transparent 28rem),
+        #2b0705;
+    }
+    .invite-wrap {
+      width:100%;
+      min-height:100%;
+      padding: max(20px, env(safe-area-inset-top)) 14px max(26px, env(safe-area-inset-bottom));
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:16px;
+    }
+    .card-scene {
+      width:min(100%, 414px);
+      aspect-ratio:var(--card-ratio);
+      perspective:1500px;
+    }
+    .card {
+      position:relative;
+      width:100%; height:100%;
+      transform-style:preserve-3d;
+      transition: transform .88s cubic-bezier(.2,.72,.16,1);
+      filter: drop-shadow(0 25px 30px rgba(0,0,0,.36));
+    }
+    .card.is-flipped { transform:rotateY(180deg); }
+    .card-face {
+      position:absolute; inset:0;
+      backface-visibility:hidden;
+      -webkit-backface-visibility:hidden;
+      overflow:hidden;
+      background:#4b0d09;
+    }
+    .card-face img { width:100%; height:100%; object-fit:cover; display:block; }
+    .card-back { transform:rotateY(180deg); }
+
+    .gold-button {
+      border:1px solid rgba(223,188,110,.82);
+      color:var(--cream);
+      background:linear-gradient(180deg, rgba(119,41,31,.94), rgba(61,10,8,.97));
+      min-height:46px;
+      padding:12px 20px;
+      min-width:170px;
+      font:500 10px/1 Montserrat,Arial,sans-serif;
+      letter-spacing:.23em;
+      text-transform:uppercase;
+      cursor:pointer;
+      box-shadow: inset 0 0 0 1px rgba(47,8,6,.55), 0 10px 28px rgba(0,0,0,.2);
+      transition: transform .16s ease, background .16s ease;
+    }
+    .gold-button:active { transform:scale(.98); }
+    .guest-line {
+      font-size:12px;
+      letter-spacing:.08em;
+      color:rgba(241,236,215,.66);
+      min-height:18px;
+      text-align:center;
+    }
+
+    /* clickable cherry on card back */
+    .cherry-action {
+      position:absolute;
+      left:50%; top:11.2%;
+      width:18%; aspect-ratio:1;
+      transform:translateX(-50%);
+      border:0;
+      border-radius:50%;
+      background:transparent;
+      cursor:pointer;
+      z-index:4;
+    }
+    .cherry-action::before {
+      content:"CLICK ME";
+      position:absolute;
+      left:50%; top:100%;
+      transform:translate(-50%, 5px);
+      color:#f0d996;
+      background:rgba(57,7,5,.82);
+      border:1px solid rgba(218,180,91,.68);
+      padding:5px 8px 4px;
+      white-space:nowrap;
+      font:600 7px/1 Montserrat,Arial,sans-serif;
+      letter-spacing:.18em;
+      border-radius:999px;
+      box-shadow:0 6px 16px rgba(0,0,0,.22);
+      animation: tinyPulse 1.7s ease-in-out infinite;
+    }
+    .cherry-action::after {
+      content:"";
+      position:absolute; inset:14%;
+      border-radius:50%;
+      border:1px solid rgba(239,211,143,.44);
+      animation:ringPulse 1.7s ease-in-out infinite;
+    }
+    @keyframes tinyPulse { 0%,100%{opacity:.66} 50%{opacity:1} }
+
+    /* FORM */
+    .form-wrap {
+      width:100%;
+      min-height:100%;
+      padding:max(14px, env(safe-area-inset-top)) 10px max(26px, env(safe-area-inset-bottom));
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      gap:12px;
+    }
+    .form-artboard {
+      position:relative;
+      width:min(100%, 440px);
+      aspect-ratio:1103/1426;
+      overflow:hidden;
+      box-shadow:0 28px 55px rgba(0,0,0,.32);
+    }
+    .form-artboard > img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .art-input {
+      position:absolute;
+      left:22.8%; width:53.1%;
+      height:8.5%;
+      background:rgba(247,243,221,.90);
+      border:0;
+      border-radius:0;
+      outline:none;
+      color:#3d0a08;
+      text-align:center;
+      padding:0 4%;
+      font:600 clamp(13px,3.5vw,18px)/1 "Cormorant Garamond",Georgia,serif;
+      box-shadow: inset 0 0 0 1px rgba(128,97,38,.24);
+    }
+    .art-input:focus { background:#fffbea; box-shadow:inset 0 0 0 2px rgba(156,119,45,.75); }
+    #fullName { top:19.2%; }
+    #email { top:36.0%; }
+    #phone { top:52.8%; }
+    .form-actions {
+      width:min(100%, 440px);
+      display:grid;
+      gap:9px;
+      padding:0 8px;
+    }
+    .submit-button { width:100%; min-height:52px; }
+    .back-link {
+      appearance:none; border:0; background:transparent; color:rgba(241,236,215,.72);
+      font:500 9px/1 Montserrat,Arial,sans-serif; letter-spacing:.16em; text-transform:uppercase;
+      padding:8px; cursor:pointer;
+    }
+    .form-error {
+      width:min(100%,440px);
+      min-height:18px;
+      margin:0;
+      color:#ffd8c9;
+      font:500 11px/1.35 Montserrat,Arial,sans-serif;
+      text-align:center;
+    }
+
+    /* SUCCESS */
+    .success-screen { background:#3e0907; }
+    .success-inner {
+      min-height:100%;
+      padding:40px 28px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      border:1px solid rgba(202,168,95,.58);
+      margin:18px;
+    }
+    .success-mark {
+      width:82px; height:82px; border-radius:50%;
+      border:1px solid var(--gold);
+      display:grid; place-items:center;
+      font-size:40px; margin-bottom:22px;
+      box-shadow:inset 0 0 0 4px #3e0907, inset 0 0 0 5px rgba(202,168,95,.42);
+    }
+    .success-inner h1 { margin:0 0 12px; font-size:clamp(45px,14vw,72px); font-weight:400; line-height:.9; }
+    .success-inner p { margin:0; max-width:310px; font-size:20px; line-height:1.35; color:rgba(241,236,215,.86); }
+    .success-inner .private { margin-top:26px; font:500 9px/1.5 Montserrat,Arial,sans-serif; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); }
+    .preview-note { margin-top:18px; max-width:320px; color:#e7c4b7; font:500 10px/1.5 Montserrat,Arial,sans-serif; }
+    .replay { margin-top:28px; }
+
+    .sr-only {
+      position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important;
+      overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <main class="phone-stage" aria-live="polite">
+
+    <!-- 1) PRESS -->
+    <section id="gateScreen" class="screen gate-screen active" aria-label="Press to open invitation">
+      <img class="gate-poster" src="assets/press-poster.jpg" alt="Antique brass lion call button with Press Me sign" />
+      <button id="pressButton" class="press-hotspot" aria-label="Press the call button to open your invitation"></button>
+      <div class="gate-hint">Tap the button</div>
+    </section>
+
+    <!-- 2) VIDEO -->
+    <section id="videoScreen" class="screen video-screen" aria-label="Invitation opening video">
+      <video id="introVideo" playsinline webkit-playsinline preload="auto" poster="assets/press-poster.jpg">
+        <source src="assets/intro.mp4" type="video/mp4" />
+      </video>
+      <button id="skipVideo" class="skip-video" type="button">Skip</button>
+    </section>
+
+    <!-- 3) LIVE FLIP CARD -->
+    <section id="inviteScreen" class="screen invite-screen" aria-label="Invitation card">
+      <div class="invite-wrap">
+        <div class="card-scene">
+          <div id="inviteCard" class="card">
+            <div class="card-face card-front">
+              <img src="assets/card-front.png" alt="You’re Invited to The Society" />
+            </div>
+            <div class="card-face card-back">
+              <img src="assets/card-back.png" alt="Join us for a night of conundrums, euphoria and odyssey" />
+              <button id="cherryButton" class="cherry-action" type="button" aria-label="Click the cherry to accept the invitation"></button>
+            </div>
+          </div>
+        </div>
+        <button id="flipButton" class="gold-button" type="button">Flip the card</button>
+        <div id="guestLine" class="guest-line"></div>
+      </div>
+    </section>
+
+    <!-- 4) ACCEPTANCE FORM -->
+    <section id="formScreen" class="screen form-screen" aria-label="Accept your invitation">
+      <form id="acceptanceForm" class="form-wrap" novalidate>
+        <div class="form-artboard">
+          <img src="assets/form-art.png" alt="Society acceptance form with Full Name, Email and Phone Number fields" />
+          <label class="sr-only" for="fullName">Full name</label>
+          <input id="fullName" class="art-input" name="fullName" autocomplete="name" required />
+          <label class="sr-only" for="email">Email</label>
+          <input id="email" class="art-input" name="email" type="email" autocomplete="email" required />
+          <label class="sr-only" for="phone">Phone number</label>
+          <input id="phone" class="art-input" name="phone" type="tel" inputmode="tel" autocomplete="tel" required />
+        </div>
+        <p id="formError" class="form-error" role="alert"></p>
+        <div class="form-actions">
+          <button id="submitButton" class="gold-button submit-button" type="submit">Accept my invitation</button>
+          <button id="backToCard" class="back-link" type="button">← Back to invitation</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 5) SUCCESS -->
+    <section id="successScreen" class="screen success-screen" aria-label="Acceptance confirmed">
+      <div class="success-inner">
+        <div class="success-mark">S</div>
+        <h1>You’re In.</h1>
+        <p>Your acceptance has been recorded.</p>
+        <div class="private">Further correspondence will arrive privately.</div>
+        <p id="previewNote" class="preview-note" hidden></p>
+        <button id="replayButton" class="gold-button replay" type="button">Replay invitation</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  /* ==============================================================
+     GOOGLE SHEETS CONNECTION
+     After deploying google-apps-script.gs as a Web App, paste the
+     /exec URL below. Until then, the invite runs safely in Preview Mode.
+     ============================================================== */
+  const APPS_SCRIPT_URL = 'PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE';
+
+  const $ = (id) => document.getElementById(id);
+  const screens = ['gateScreen','videoScreen','inviteScreen','formScreen','successScreen'];
+  const params = new URLSearchParams(location.search);
+  const initialGuest = {
+    name: params.get('n') || '',
+    email: params.get('e') || '',
+    phone: params.get('p') || ''
+  };
+
+  function showScreen(id) {
+    screens.forEach((screenId) => $(screenId).classList.toggle('active', screenId === id));
+    if (id === 'formScreen') setTimeout(() => $('fullName').focus({preventScroll:true}), 450);
+  }
+
+  function normalizePhone(value) {
+    return (value || '').replace(/[^0-9+]/g, '').slice(0, 18);
+  }
+
+  function prefillGuest() {
+    $('fullName').value = initialGuest.name;
+    $('email').value = initialGuest.email;
+    $('phone').value = initialGuest.phone;
+    if (initialGuest.name) $('guestLine').textContent = 'Prepared for ' + initialGuest.name;
+  }
+
+  function revealCard() {
+    const video = $('introVideo');
+    try { video.pause(); } catch (_) {}
+    showScreen('inviteScreen');
+  }
+
+  $('pressButton').addEventListener('click', async () => {
+    showScreen('videoScreen');
+    const video = $('introVideo');
+    video.currentTime = 0;
+    video.muted = false;
+    video.volume = 1;
+    try {
+      await video.play();
+    } catch (err) {
+      // If a browser blocks playback for any reason, don't trap the guest.
+      revealCard();
+    }
+  });
+
+  $('introVideo').addEventListener('ended', revealCard);
+  $('introVideo').addEventListener('error', revealCard);
+  $('skipVideo').addEventListener('click', revealCard);
+
+  $('flipButton').addEventListener('click', () => {
+    const card = $('inviteCard');
+    const flipped = card.classList.toggle('is-flipped');
+    $('flipButton').textContent = flipped ? 'Flip back' : 'Flip the card';
+  });
+
+  $('cherryButton').addEventListener('click', () => showScreen('formScreen'));
+  $('backToCard').addEventListener('click', () => showScreen('inviteScreen'));
+
+  $('phone').addEventListener('input', (e) => { e.target.value = normalizePhone(e.target.value); });
+
+  $('acceptanceForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const error = $('formError');
+    error.textContent = '';
+
+    const fullName = $('fullName').value.trim();
+    const email = $('email').value.trim();
+    const phone = $('phone').value.trim();
+
+    if (!fullName || !email || !phone) {
+      error.textContent = 'Please complete all three fields.';
+      return;
+    }
+    if (!$('email').checkValidity()) {
+      error.textContent = 'Please enter a valid email address.';
+      return;
+    }
+
+    const payload = {
+      timestamp: new Date().toISOString(),
+      fullName,
+      email,
+      phone,
+      status: 'Accepted',
+      invitedName: initialGuest.name,
+      invitedEmail: initialGuest.email,
+      invitedPhone: initialGuest.phone,
+      sourceUrl: location.href
+    };
+
+    const submit = $('submitButton');
+    submit.disabled = true;
+    submit.textContent = 'Recording…';
+
+    const isPreview = !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR_');
+
+    try {
+      if (isPreview) {
+        localStorage.setItem('societyAcceptancePreview', JSON.stringify(payload));
+      } else {
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify(payload)
+        });
+      }
+
+      $('previewNote').hidden = !isPreview;
+      $('previewNote').textContent = isPreview
+        ? 'Preview mode: this test was saved only on this device. Connect the included Google Apps Script before sending the live invitation.'
+        : '';
+      showScreen('successScreen');
+    } catch (err) {
+      error.textContent = 'We could not record your acceptance. Please try again.';
+      submit.disabled = false;
+      submit.textContent = 'Accept my invitation';
+    }
+  });
+
+  $('replayButton').addEventListener('click', () => {
+    $('inviteCard').classList.remove('is-flipped');
+    $('flipButton').textContent = 'Flip the card';
+    $('acceptanceForm').reset();
+    prefillGuest();
+    showScreen('gateScreen');
+  });
+
+  // Preload the exact card artwork before the video finishes.
+  ['assets/card-front.png','assets/card-back.png','assets/form-art.png'].forEach((src) => {
+    const img = new Image(); img.src = src;
+  });
+  prefillGuest();
+</script>
+</body>
+</html>
