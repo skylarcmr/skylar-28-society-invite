@@ -160,22 +160,33 @@
       aspect-ratio:var(--card-ratio);
       perspective:1500px;
     }
+    /* Use the same grid-based 3D flip approach as the Simone invite.
+       Important: do NOT put CSS filter on .card; filter forces 3D children
+       to flatten in some browsers and makes the back face render incorrectly. */
     .card {
       position:relative;
       width:100%; height:100%;
+      display:grid;
       transform-style:preserve-3d;
-      transition: transform .88s cubic-bezier(.2,.72,.16,1);
-      filter: drop-shadow(0 25px 30px rgba(0,0,0,.36));
+      -webkit-transform-style:preserve-3d;
+      transition:transform .95s cubic-bezier(.7,0,.3,1);
+      will-change:transform;
     }
     .card.is-flipped { transform:rotateY(180deg); }
     .card-face {
-      position:absolute; inset:0;
+      grid-column:1;
+      grid-row:1;
+      position:relative;
+      width:100%;
+      height:100%;
       backface-visibility:hidden;
       -webkit-backface-visibility:hidden;
       overflow:hidden;
       background:#4b0d09;
+      box-shadow:0 25px 34px rgba(0,0,0,.36);
     }
     .card-face img { width:100%; height:100%; object-fit:cover; display:block; }
+    .card-front { transform:rotateY(0deg); }
     .card-back { transform:rotateY(180deg); }
 
     .gold-button {
@@ -365,7 +376,7 @@
             </div>
           </div>
         </div>
-        <button id="flipButton" class="gold-button" type="button">Flip the card</button>
+        <button id="flipButton" class="gold-button" type="button">Flip it over</button>
         <div id="guestLine" class="guest-line"></div>
       </div>
     </section>
@@ -407,11 +418,16 @@
 
 <script>
   /* ==============================================================
-     GOOGLE SHEETS CONNECTION
-     After deploying google-apps-script.gs as a Web App, paste the
-     /exec URL below. Until then, the invite runs safely in Preview Mode.
+     GOOGLE FORM CONNECTION
+     This submits directly to Skylar's Google Form response endpoint.
+     Entry IDs come from the pre-filled form URL supplied by Skylar.
      ============================================================== */
-  const APPS_SCRIPT_URL = 'PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE';
+  const GOOGLE_FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSeyKBSXqnxNjgp7WCSfsUyvM93kXSIciMCcz6M4jhZfJYeMTA/formResponse';
+  const GOOGLE_FORM_FIELDS = {
+    fullName: 'entry.1332529863',
+    email: 'entry.338112420',
+    phone: 'entry.1947325058'
+  };
 
   const $ = (id) => document.getElementById(id);
   const screens = ['gateScreen','videoScreen','inviteScreen','formScreen','successScreen'];
@@ -465,7 +481,7 @@
   $('flipButton').addEventListener('click', () => {
     const card = $('inviteCard');
     const flipped = card.classList.toggle('is-flipped');
-    $('flipButton').textContent = flipped ? 'Flip back' : 'Flip the card';
+    $('flipButton').textContent = flipped ? 'Flip back' : 'Flip it over';
   });
 
   $('cherryButton').addEventListener('click', () => showScreen('formScreen'));
@@ -491,40 +507,24 @@
       return;
     }
 
-    const payload = {
-      timestamp: new Date().toISOString(),
-      fullName,
-      email,
-      phone,
-      status: 'Accepted',
-      invitedName: initialGuest.name,
-      invitedEmail: initialGuest.email,
-      invitedPhone: initialGuest.phone,
-      sourceUrl: location.href
-    };
-
     const submit = $('submitButton');
     submit.disabled = true;
     submit.textContent = 'Recording…';
 
-    const isPreview = !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR_');
-
     try {
-      if (isPreview) {
-        localStorage.setItem('societyAcceptancePreview', JSON.stringify(payload));
-      } else {
-        await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {'Content-Type': 'text/plain;charset=utf-8'},
-          body: JSON.stringify(payload)
-        });
-      }
+      const body = new URLSearchParams();
+      body.set(GOOGLE_FORM_FIELDS.fullName, fullName);
+      body.set(GOOGLE_FORM_FIELDS.email, email);
+      body.set(GOOGLE_FORM_FIELDS.phone, phone);
 
-      $('previewNote').hidden = !isPreview;
-      $('previewNote').textContent = isPreview
-        ? 'Preview mode: this test was saved only on this device. Connect the included Google Apps Script before sending the live invitation.'
-        : '';
+      await fetch(GOOGLE_FORM_ACTION, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'},
+        body: body.toString()
+      });
+
+      $('previewNote').hidden = true;
       showScreen('successScreen');
     } catch (err) {
       error.textContent = 'We could not record your acceptance. Please try again.';
@@ -535,7 +535,7 @@
 
   $('replayButton').addEventListener('click', () => {
     $('inviteCard').classList.remove('is-flipped');
-    $('flipButton').textContent = 'Flip the card';
+    $('flipButton').textContent = 'Flip it over';
     $('acceptanceForm').reset();
     prefillGuest();
     showScreen('gateScreen');
