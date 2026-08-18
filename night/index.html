@@ -512,6 +512,20 @@ const GUEST_ALIASES = {
   "miranda": "Morena Shepard"
 };
 
+const PRECONFIRMED_GUESTS = new Map([
+  ["Skylar McGuire-Rollins", true],
+  ["Kat Goodman", false],
+  ["Maddy", null],
+  ["Sarah", true],
+  ["Whitlee", false],
+  ["Uroosa Fatima", true],
+  ["Diana Danielle McClellan", null],
+  ["Kiki Lopez", true],
+  ["Nana Krah", true]
+]);
+
+const PREDECLINED_GUESTS = new Set(["Natasha"]);
+
 const PHOTO_MISSIONS = [
   "Fun Shirt",
   "Birthday Twin",
@@ -679,6 +693,14 @@ function saveStored(){
   submitRemote(payload);
 }
 
+function saveLocalOnly(){
+  const payload = {
+    ...state,
+    timestamp:new Date().toISOString()
+  };
+  try{ localStorage.setItem(storageKey(state.name),JSON.stringify(payload)); }catch(_){}
+}
+
 async function submitRemote(payload){
   if(!RESPONSE_ENDPOINT) return;
   const response = new URLSearchParams({
@@ -735,12 +757,35 @@ $("nameForm").addEventListener("submit",e=>{
       transitionTo("declineScreen");
       return;
     }
-    if(state.attendingNight === true && state.attendingDinner !== null){
+    if(state.attendingNight === true){
       populateMission();
       transitionTo("routeScreen");
       return;
     }
   }
+
+  if(PREDECLINED_GUESTS.has(guest)){
+    state.attendingNight = false;
+    state.attendingDinner = null;
+    state.photoMission = "";
+    state.videoMission = "";
+    saveLocalOnly();
+    transitionTo("declineScreen");
+    return;
+  }
+
+  if(PRECONFIRMED_GUESTS.has(guest)){
+    state.attendingNight = true;
+    state.attendingDinner = PRECONFIRMED_GUESTS.get(guest);
+    const assigned = assignMissions(guest);
+    state.photoMission = assigned.photo;
+    state.videoMission = assigned.video;
+    saveLocalOnly();
+    populateMission();
+    transitionTo("routeScreen");
+    return;
+  }
+
   transitionTo("nightScreen");
 });
 
