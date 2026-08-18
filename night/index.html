@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#260403">
+<title>The Society — Night Access</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --wine:#350705;
+  --wine2:#54100c;
+  --cream:#f0ead2;
+  --gold:#cda957;
+  --gold2:#856328;
+  --ink:#320805;
+  --muted:#d9c9a2;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#160201}
+body{
+  font-family:"Cormorant Garamond", Georgia, serif;
+  color:var(--cream);
+  overflow-x:hidden;
+}
+button,input{font:inherit}
+button{-webkit-tap-highlight-color:transparent}
+
+.app{
+  min-height:100svh;
+  display:grid;
+  place-items:center;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(126,40,28,.28), transparent 34rem),
+    linear-gradient(#170201,#2a0503 55%,#130201);
+}
+.stage{
+  position:relative;
+  width:min(100vw,520px);
+  min-height:100svh;
+  overflow:hidden;
+  background:#2a0503;
+  box-shadow:0 25px 90px rgba(0,0,0,.55);
+}
+.screen{
+  position:absolute;
+  inset:0;
+  min-height:100svh;
+  overflow-y:auto;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .32s ease, visibility .32s ease;
+}
+.screen.active{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  z-index:2;
+}
+.center{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:max(24px,env(safe-area-inset-top)) 18px max(28px,env(safe-area-inset-bottom));
+}
+
+/* NAME SCREEN */
+.name-frame{
+  width:min(100%,440px);
+  min-height:690px;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:64px 38px;
+  border:1px solid rgba(205,169,87,.72);
+  background:
+    radial-gradient(circle at 50% 20%,rgba(124,35,27,.30),transparent 24rem),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 1px,transparent 1px 5px),
+    #430906;
+  box-shadow:inset 0 0 0 7px #430906,inset 0 0 0 8px rgba(205,169,87,.42),0 24px 55px rgba(0,0,0,.36);
+}
+.name-frame::before,.name-frame::after{
+  content:"";
+  position:absolute;
+  left:24px;right:24px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+.name-frame::before{top:26px}
+.name-frame::after{bottom:26px}
+.crest{
+  font-size:58px;
+  color:var(--gold);
+  line-height:1;
+  margin-bottom:20px;
+  text-shadow:0 3px 8px rgba(0,0,0,.45);
+}
+.eyebrow{
+  font-family:Montserrat,Arial,sans-serif;
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  font-size:10px;
+  color:var(--gold);
+  margin-bottom:18px;
+}
+.name-frame h1{
+  margin:0 0 12px;
+  font-size:clamp(42px,12vw,64px);
+  font-weight:400;
+  line-height:.94;
+}
+.name-frame p{
+  margin:0 auto 34px;
+  max-width:310px;
+  font-size:20px;
+  line-height:1.35;
+  color:rgba(240,234,210,.82);
+}
+.name-input{
+  width:100%;
+  height:64px;
+  border:1px solid rgba(205,169,87,.88);
+  border-radius:0;
+  background:#f3edd8;
+  color:var(--ink);
+  text-align:center;
+  outline:none;
+  padding:0 18px;
+  font-size:24px;
+  box-shadow:inset 0 0 0 4px #f3edd8,inset 0 0 0 5px rgba(133,99,40,.45);
+}
+.name-input:focus{
+  box-shadow:inset 0 0 0 3px #f3edd8,inset 0 0 0 5px var(--gold);
+}
+.primary{
+  margin-top:18px;
+  min-height:52px;
+  padding:14px 28px;
+  border:1px solid var(--gold);
+  border-radius:0;
+  color:var(--cream);
+  background:linear-gradient(#6b1711,#390604);
+  font:600 10px/1 Montserrat,Arial,sans-serif;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  cursor:pointer;
+  box-shadow:0 10px 22px rgba(0,0,0,.24);
+}
+.error{
+  min-height:22px;
+  margin-top:12px;
+  font:500 11px/1.4 Montserrat,Arial,sans-serif;
+  color:#ffd7c7;
+  text-align:center;
+}
+
+/* ART SCREENS */
+.art-wrap{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:max(10px,env(safe-area-inset-top)) 8px max(14px,env(safe-area-inset-bottom));
+  background:#250403;
+}
+.art-card{
+  position:relative;
+  width:min(100%,500px);
+  box-shadow:0 28px 60px rgba(0,0,0,.34);
+}
+.art-card img{width:100%;height:auto;display:block;user-select:none}
+.choice{
+  position:absolute;
+  appearance:none;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+  border-radius:12px;
+}
+.choice::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:3px solid transparent;
+  border-radius:inherit;
+  transition:border-color .14s ease,box-shadow .14s ease,transform .14s ease;
+}
+.choice:active::after{transform:scale(.97)}
+.choice.selected::after{
+  border-color:#f0d88a;
+  box-shadow:0 0 0 4px rgba(205,169,87,.25),0 0 30px rgba(205,169,87,.35);
+}
+.choice:focus-visible::after{border-color:#fff2b7}
+
+/* 4345 image positions */
+#nightYes{left:13.5%;top:61.2%;width:31.5%;height:14.1%}
+#nightNo{left:52.0%;top:61.2%;width:31.5%;height:14.1%}
+
+/* 4346 image positions */
+#dinnerYes{left:15.5%;top:59.8%;width:33.2%;height:13.2%}
+#dinnerNo{left:51.7%;top:59.8%;width:32.2%;height:13.2%}
+
+/* DECLINE */
+.decline{
+  width:min(100%,430px);
+  text-align:center;
+  padding:52px 30px;
+  border:1px solid rgba(205,169,87,.64);
+  background:#420806;
+  box-shadow:inset 0 0 0 6px #420806,inset 0 0 0 7px rgba(205,169,87,.35);
+}
+.decline .crest{margin-bottom:18px}
+.decline h2{font-size:52px;font-weight:400;margin:0 0 14px}
+.decline p{font-size:21px;line-height:1.4;margin:0;color:rgba(240,234,210,.85)}
+.decline small{
+  display:block;
+  margin-top:26px;
+  font:500 9px/1.6 Montserrat,Arial,sans-serif;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--gold);
+}
+
+/* ROUTE + FLIP */
+.route-screen{background:#240403}
+.route-wrap{
+  min-height:100%;
+  padding:max(12px,env(safe-area-inset-top)) 10px max(24px,env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+}
+.route-card-scene{
+  width:min(100%,480px);
+  aspect-ratio:942/1536;
+  perspective:1800px;
+}
+.route-card{
+  position:relative;
+  width:100%;
+  height:100%;
+  transform-style:preserve-3d;
+  transition:transform .9s cubic-bezier(.2,.72,.16,1);
+}
+.route-card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute;
+  inset:0;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  overflow:hidden;
+  background:#3d0805;
+  box-shadow:0 24px 55px rgba(0,0,0,.35);
+}
+.face.route-front img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.face.mission-back{
+  transform:rotateY(180deg);
+  background:#430806;
+  display:grid;
+  place-items:center;
+}
+.mission-canvas{
+  position:relative;
+  width:100%;
+  aspect-ratio:1103/1426;
+}
+.mission-template{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:fill;
+  display:block;
+}
+.mission-cover{
+  position:absolute;
+  background:#f0ead2;
+  color:#3a0a07;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:18px;
+  box-shadow:inset 0 0 32px rgba(150,113,44,.08);
+}
+.photo-cover{
+  left:13.0%;right:10.8%;
+  top:39.0%;height:14.0%;
+}
+.video-cover{
+  left:13.0%;right:10.8%;
+  top:73.2%;height:14.2%;
+}
+.mission-text{
+  max-width:100%;
+  font-size:clamp(21px,5.5vw,34px);
+  line-height:1.02;
+  font-weight:500;
+  text-wrap:balance;
+}
+.mission-note{
+  margin-top:8px;
+  font:600 clamp(8px,2vw,11px)/1.2 Montserrat,Arial,sans-serif;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:#856328;
+}
+.route-actions{
+  width:min(100%,480px);
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+.route-actions .primary{margin:0;flex:1;max-width:290px}
+.secondary{
+  border:0;
+  background:transparent;
+  color:rgba(240,234,210,.66);
+  font:500 9px/1 Montserrat,Arial,sans-serif;
+  letter-spacing:.17em;
+  text-transform:uppercase;
+  padding:12px;
+  cursor:pointer;
+}
+.guest-tag{
+  font:500 9px/1.4 Montserrat,Arial,sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.17em;
+  color:rgba(240,234,210,.66);
+  text-align:center;
+}
+
+/* tiny transition veil */
+.veil{
+  position:fixed;inset:0;background:#260403;z-index:99;
+  opacity:0;pointer-events:none;transition:opacity .18s ease;
+}
+.veil.on{opacity:1}
+
+@media (min-width:700px){
+  .stage{min-height:min(100svh,930px);height:min(100svh,930px)}
+  .screen{min-height:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <main class="stage">
+
+    <section id="nameScreen" class="screen active">
+      <div class="center">
+        <form id="nameForm" class="name-frame" autocomplete="off">
+          <div class="crest">S♥</div>
+          <div class="eyebrow">Private Correspondence</div>
+          <h1>Identify Yourself</h1>
+          <p>Enter the name your invitation was addressed to.</p>
+          <label for="guestName" class="eyebrow" style="margin-bottom:9px">Guest Name</label>
+          <input id="guestName" class="name-input" name="guestName" autocomplete="name" required>
+          <button class="primary" type="submit">Continue</button>
+          <div id="nameError" class="error" role="alert"></div>
+        </form>
+      </div>
+    </section>
+
+    <section id="nightScreen" class="screen">
+      <div class="art-wrap">
+        <div class="art-card">
+          <img src="assets/night-rsvp.png" alt="Kindly respond. Will you be joining us for the night?">
+          <button id="nightYes" class="choice" type="button" aria-label="Yes, I will be joining for the night"></button>
+          <button id="nightNo" class="choice" type="button" aria-label="No, I will not be joining for the night"></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="dinnerScreen" class="screen">
+      <div class="art-wrap">
+        <div class="art-card">
+          <img src="assets/dinner-rsvp.png" alt="Dinner at 6:30 PM. Will you be joining us for dinner?">
+          <button id="dinnerYes" class="choice" type="button" aria-label="Yes, I will attend dinner"></button>
+          <button id="dinnerNo" class="choice" type="button" aria-label="No, I will not attend dinner"></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="declineScreen" class="screen">
+      <div class="center">
+        <div class="decline">
+          <div class="crest">S♥</div>
+          <h2>Response Received</h2>
+          <p>Thank you for letting us know. The Society will miss you this evening.</p>
+          <small>Your response has been recorded.</small>
+          <button id="changeResponse" class="primary" type="button">Change response</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="routeScreen" class="screen route-screen">
+      <div class="route-wrap">
+        <div class="route-card-scene">
+          <div id="routeCard" class="route-card">
+            <div class="face route-front">
+              <img src="assets/night-route.png" alt="The Night's Route">
+            </div>
+            <div class="face mission-back">
+              <div class="mission-canvas">
+                <img class="mission-template" src="assets/mission-template.png" alt="">
+                <div class="mission-cover photo-cover">
+                  <div id="photoMission" class="mission-text"></div>
+                </div>
+                <div class="mission-cover video-cover">
+                  <div>
+                    <div id="videoMission" class="mission-text"></div>
+                    <div class="mission-note">15 seconds or less</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="guestTag" class="guest-tag"></div>
+
+        <div class="route-actions">
+          <button id="flipMission" class="primary" type="button">Flip for your mission</button>
+        </div>
+        <button id="editRsvp" class="secondary" type="button">Update my RSVP</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+<div id="veil" class="veil"></div>
+
+<script>
+/* ================================================================
+   OPTIONAL RESPONSE ENDPOINT
+   Leave blank for preview/testing. The site will save RSVP data in
+   localStorage. When you have a Google Form or Apps Script endpoint
+   for this SECOND RSVP, wire it here.
+   ================================================================ */
+const RESPONSE_ENDPOINT = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSd71lCIdfmdIjWF4Eii4ReY_eAtVKCfYDj2udD554WOor9e-g/formResponse";
+const FORM_FIELDS = {
+  name:"entry.1029428322",
+  attendingNight:"entry.963919196",
+  attendingDinner:"entry.930425478"
+};
+
+/* Official invited roster */
+const GUESTS = [
+  "Natasha",
+  "Sarah",
+  "Whitlee",
+  "Skyler Tiarks",
+  "Puja",
+  "Maddy",
+  "Lauren McGuire",
+  "Jeffrey Rhee",
+  "Kiara",
+  "Kiki Lopez",
+  "James McGuire",
+  "Dil",
+  "Brittany Zavala",
+  "Anupriya Shrivastava",
+  "Diana Danielle McClellan",
+  "Bailey",
+  "Kat Goodman",
+  "Uroosa Fatima",
+  "Morena Shepard",
+  "Nana Krah",
+  "Amber Chavez"
+];
+
+/* Exact mission titles from the birthday scavenger hunt */
+const PHOTO_MISSIONS = [
+  "Fun Shirt",
+  "Birthday Twin",
+  "Cherry Find",
+  "Number 28",
+  "Outfit Match",
+  "Best Facial Hair",
+  "Statement Shoes",
+  "Chicago Proof",
+  "Neon Moment",
+  "Mirror Selfie",
+  "New Bar Friend",
+  "Best-Dressed Person",
+  "Unexpected Object",
+  "Photobooth Pose"
+];
+
+const VIDEO_MISSIONS = [
+  "Spontaneous Dance Break",
+  "Birthday Hype Person",
+  "Dramatic Hair Flip",
+  "Runway Moment",
+  "Fake Dramatic Argument",
+  "Drink Commercial",
+  "Breaking Birthday News",
+  "Award-Winning Moment",
+  "Main-Character Entrance",
+  "Compliment Mission",
+  "Celebrity Sighting",
+  "Mini Karaoke",
+  "Birthday Campaign Speech",
+  "Instant Conga"
+];
+
+const $ = id => document.getElementById(id);
+const screens = ["nameScreen","nightScreen","dinnerScreen","declineScreen","routeScreen"];
+const state = {
+  name:"",
+  attendingNight:null,
+  attendingDinner:null,
+  photoMission:"",
+  videoMission:""
+};
+
+function norm(v){
+  return (v||"")
+    .toLowerCase()
+    .replace(/[’']/g,"")
+    .replace(/[^a-z0-9]+/g," ")
+    .trim()
+    .replace(/\s+/g," ");
+}
+function resolveGuest(input){
+  const n = norm(input);
+  const exact = GUESTS.find(g => norm(g) === n);
+  if(exact) return exact;
+
+  /* Permit unique first-name matching without exposing the roster. */
+  const candidates = GUESTS.filter(g => norm(g).split(" ")[0] === n);
+  if(candidates.length === 1) return candidates[0];
+
+  return null;
+}
+
+function showScreen(id){
+  screens.forEach(s => $(s).classList.toggle("active",s===id));
+  window.scrollTo(0,0);
+}
+
+function transitionTo(id){
+  $("veil").classList.add("on");
+  setTimeout(()=>{
+    showScreen(id);
+    requestAnimationFrame(()=>$("veil").classList.remove("on"));
+  },180);
+}
+
+function assignMissions(name){
+  const i = GUESTS.indexOf(name);
+  if(i >= 0){
+    const photoIndex = i % PHOTO_MISSIONS.length;
+    const cycle = Math.floor(i / PHOTO_MISSIONS.length);
+    const videoIndex = ((i * 5) + 2 + (cycle * 3)) % VIDEO_MISSIONS.length;
+    return {
+      photo: PHOTO_MISSIONS[photoIndex],
+      video: VIDEO_MISSIONS[videoIndex]
+    };
+  }
+
+  /* deterministic fallback */
+  let h = 0;
+  for(const c of name) h = ((h * 31) + c.charCodeAt(0)) >>> 0;
+  return {
+    photo: PHOTO_MISSIONS[h % PHOTO_MISSIONS.length],
+    video: VIDEO_MISSIONS[((h >>> 4) + 5) % VIDEO_MISSIONS.length]
+  };
+}
+
+function storageKey(name){ return "society-night-rsvp::" + norm(name); }
+
+function loadStored(name){
+  try{
+    const raw = localStorage.getItem(storageKey(name));
+    return raw ? JSON.parse(raw) : null;
+  }catch(_){ return null; }
+}
+
+function saveStored(){
+  const payload = {
+    ...state,
+    timestamp:new Date().toISOString()
+  };
+  try{ localStorage.setItem(storageKey(state.name),JSON.stringify(payload)); }catch(_){}
+  submitRemote(payload);
+}
+
+async function submitRemote(payload){
+  if(!RESPONSE_ENDPOINT) return;
+  const response = new URLSearchParams({
+    [FORM_FIELDS.name]:payload.name,
+    [FORM_FIELDS.attendingNight]:payload.attendingNight ? "Yes" : "No",
+    [FORM_FIELDS.attendingDinner]:payload.attendingDinner === null
+      ? ""
+      : payload.attendingDinner ? "Yes" : "No"
+  });
+  try{
+    await fetch(RESPONSE_ENDPOINT,{
+      method:"POST",
+      mode:"no-cors",
+      body:response
+    });
+  }catch(_){}
+}
+
+function populateMission(){
+  $("photoMission").textContent = state.photoMission;
+  $("videoMission").textContent = state.videoMission;
+  $("guestTag").textContent = "Classified assignment for " + state.name;
+}
+
+function openRoute(){
+  const missions = assignMissions(state.name);
+  state.photoMission = missions.photo;
+  state.videoMission = missions.video;
+  populateMission();
+  $("routeCard").classList.remove("flipped");
+  $("flipMission").textContent = "Flip for your mission";
+  saveStored();
+  transitionTo("routeScreen");
+}
+
+/* Name */
+const initialName = new URLSearchParams(location.search).get("n");
+if(initialName) $("guestName").value = initialName;
+
+$("nameForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  $("nameError").textContent = "";
+  const guest = resolveGuest($("guestName").value);
+  if(!guest){
+    $("nameError").textContent = "We couldn't match that name to this invitation. Please enter the name the invitation was sent to.";
+    return;
+  }
+  state.name = guest;
+
+  const previous = loadStored(guest);
+  if(previous){
+    Object.assign(state,previous);
+    if(state.attendingNight === false){
+      transitionTo("declineScreen");
+      return;
+    }
+    if(state.attendingNight === true && state.attendingDinner !== null){
+      populateMission();
+      transitionTo("routeScreen");
+      return;
+    }
+  }
+  transitionTo("nightScreen");
+});
+
+/* Night answer */
+function nightChoice(value, el){
+  document.querySelectorAll("#nightScreen .choice").forEach(b=>b.classList.remove("selected"));
+  el.classList.add("selected");
+  state.attendingNight = value;
+
+  setTimeout(()=>{
+    if(!value){
+      state.attendingDinner = null;
+      state.photoMission = "";
+      state.videoMission = "";
+      saveStored();
+      transitionTo("declineScreen");
+    }else{
+      transitionTo("dinnerScreen");
+    }
+  },320);
+}
+$("nightYes").addEventListener("click",()=>nightChoice(true,$("nightYes")));
+$("nightNo").addEventListener("click",()=>nightChoice(false,$("nightNo")));
+
+/* Dinner answer */
+function dinnerChoice(value, el){
+  document.querySelectorAll("#dinnerScreen .choice").forEach(b=>b.classList.remove("selected"));
+  el.classList.add("selected");
+  state.attendingDinner = value;
+  setTimeout(openRoute,320);
+}
+$("dinnerYes").addEventListener("click",()=>dinnerChoice(true,$("dinnerYes")));
+$("dinnerNo").addEventListener("click",()=>dinnerChoice(false,$("dinnerNo")));
+
+/* Route / mission flip */
+$("flipMission").addEventListener("click",()=>{
+  const flipped = $("routeCard").classList.toggle("flipped");
+  $("flipMission").textContent = flipped ? "Return to the route" : "Flip for your mission";
+});
+
+$("editRsvp").addEventListener("click",()=>{
+  state.attendingNight = null;
+  state.attendingDinner = null;
+  $("nightYes").classList.remove("selected");
+  $("nightNo").classList.remove("selected");
+  $("dinnerYes").classList.remove("selected");
+  $("dinnerNo").classList.remove("selected");
+  transitionTo("nightScreen");
+});
+
+$("changeResponse").addEventListener("click",()=>{
+  state.attendingNight = null;
+  state.attendingDinner = null;
+  transitionTo("nightScreen");
+});
+
+/* Preload */
+["assets/night-rsvp.png","assets/dinner-rsvp.png","assets/night-route.png","assets/mission-template.png"]
+  .forEach(src=>{const im=new Image();im.src=src;});
+</script>
+</body>
+</html>
