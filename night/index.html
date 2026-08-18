@@ -489,10 +489,29 @@ const GUESTS = [
   "Uroosa Fatima",
   "Morena Shepard",
   "Nana Krah",
-  "Amber Chavez"
+  "Amber Chavez",
+  "Skylar McGuire-Rollins"
 ];
 
 /* Exact mission titles from the birthday scavenger hunt */
+
+const GUEST_ALIASES = {
+  "catherine": "Kat Goodman",
+  "catherine goodman": "Kat Goodman",
+  "catherine m goodman": "Kat Goodman",
+  "kathryn": "Kat Goodman",
+  "kathryn goodman": "Kat Goodman",
+  "kathryn m goodman": "Kat Goodman",
+  "maddie": "Maddy",
+  "maddie martin": "Maddy",
+  "whitney": "Whitlee",
+  "pooja": "Puja",
+  "kiera": "Kiara",
+  "jill": "Dil",
+  "arusa": "Uroosa Fatima",
+  "miranda": "Morena Shepard"
+};
+
 const PHOTO_MISSIONS = [
   "Fun Shirt",
   "Birthday Twin",
@@ -545,14 +564,58 @@ function norm(v){
     .trim()
     .replace(/\s+/g," ");
 }
+
+function editDistance(a,b){
+  const row = Array.from({length:b.length+1},(_,i)=>i);
+  for(let i=1;i<=a.length;i++){
+    let previous = row[0];
+    row[0] = i;
+    for(let j=1;j<=b.length;j++){
+      const saved = row[j];
+      row[j] = Math.min(
+        row[j] + 1,
+        row[j-1] + 1,
+        previous + (a[i-1] === b[j-1] ? 0 : 1)
+      );
+      previous = saved;
+    }
+  }
+  return row[b.length];
+}
+
 function resolveGuest(input){
   const n = norm(input);
+  if(!n) return null;
+
   const exact = GUESTS.find(g => norm(g) === n);
   if(exact) return exact;
 
-  /* Permit unique first-name matching without exposing the roster. */
-  const candidates = GUESTS.filter(g => norm(g).split(" ")[0] === n);
-  if(candidates.length === 1) return candidates[0];
+  const inputParts = n.split(" ");
+  const first = inputParts[0];
+  const alias = GUEST_ALIASES[n] || GUEST_ALIASES[first];
+  if(alias) return alias;
+
+  /* Accept a unique meaningful part of an invited name. */
+  const meaningful = inputParts.filter(part => part.length >= 3);
+  if(meaningful.length){
+    const scored = GUESTS.map(guest => {
+      const guestParts = norm(guest).split(" ");
+      const score = meaningful.filter(part => guestParts.includes(part)).length;
+      return {guest,score};
+    });
+    const bestScore = Math.max(...scored.map(item => item.score));
+    const best = scored.filter(item => item.score === bestScore && bestScore > 0);
+    if(best.length === 1) return best[0].guest;
+  }
+
+  /* Accept one-character first-name variations only when the result is unique. */
+  if(first.length >= 4){
+    const close = GUESTS.filter(guest => {
+      const invitedFirst = norm(guest).split(" ")[0];
+      return editDistance(first,invitedFirst) <= 1;
+    });
+    if(close.length === 1) return close[0];
+  }
 
   return null;
 }
@@ -571,6 +634,13 @@ function transitionTo(id){
 }
 
 function assignMissions(name){
+  if(name === "Skylar McGuire-Rollins"){
+    return {
+      photo: "Get a Group Video",
+      video: "Film the Birthday Cheers"
+    };
+  }
+
   const i = GUESTS.indexOf(name);
   if(i >= 0){
     const photoIndex = i % PHOTO_MISSIONS.length;
